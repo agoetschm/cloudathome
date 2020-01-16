@@ -1,0 +1,155 @@
+version: '3.5'
+
+services:
+  db:
+    build: ./db
+    restart: always
+    volumes:
+      # - ${DB_DATA_PATH}:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
+    env_file:
+      - db.env
+
+  nc-app:
+    image: nextcloud:fpm-alpine
+    restart: always
+    volumes:
+      # - ${NEXTCLOUD_HTML_PATH}:/var/www/html
+      - nc:/var/www/html
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=nextcloud
+      - NEXTCLOUD_TRUSTED_DOMAINS=${DOMAIN}
+      - NC_overwriteprotocol=https
+      - NC_overwritehost=${DOMAIN}
+      - NC_overwritewebroot=/nextcloud
+    env_file:
+      - db.env
+      - admin.env
+    depends_on:
+      - db
+
+  nc-web:
+    build: ./web
+    restart: always
+    volumes:
+      # - ${NEXTCLOUD_HTML_PATH}:/var/www/html:ro
+      - nc:/var/www/html:ro
+    environment:
+      - VIRTUAL_HOST=${DOMAIN}
+    depends_on:
+      - nc-app
+    networks:
+      - proxy-tier
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-tier"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+      - "traefik.http.routers.nextcloud.rule=Host(`${DOMAIN}`) && PathPrefix(`/nextcloud`)"
+      - "traefik.http.routers.nextcloud.tls=true"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      # - "traefik.http.routers.nextcloud.tls.certresolver=mytlschallenge"
+      # strip /gitea prefix
+      - "traefik.http.middlewares.nc-strip-prefix.stripprefix.prefixes=/nextcloud"
+      # - "traefik.http.middlewares.nc-strip-prefix.stripprefix.forceslash=true"
+      - "traefik.http.routers.nextcloud.middlewares=nc-strip-prefix@docker"
+      # global redirect to https
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https@docker"
+      # middleware redirect
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  gitea:
+    image: gitea
+    restart: always
+    volumes:
+      - gitea:/data
+    environment:
+      - DOMAIN
+      - ROOT_URL=https://${DOMAIN}/gitea/
+      - DB_TYPE=postgres
+      - DB_HOST=db
+      - DB_NAME=gitea
+      - SSH_PORT=2222
+      - INSTALL_LOCK=true # will trigger auto install
+    env_file:
+      - db.env
+    depends_on:
+      - db
+    networks:
+      - proxy-tier
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-tier"
+      - "traefik.http.routers.gitea.entrypoints=websecure"
+      - "traefik.http.routers.gitea.rule=Host(`${DOMAIN}`) && PathPrefix(`/gitea`)"
+      - "traefik.http.routers.gitea.tls=true"
+      - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+      # strip /gitea prefix
+      - "traefik.http.middlewares.gitea-strip-prefix.stripprefix.prefixes=/gitea"
+      # - "traefik.http.middlewares.gitea-strip-prefix.stripprefix.forceslash=true"
+      - "traefik.http.routers.gitea.middlewares=gitea-strip-prefix@docker"
+      # ssh
+      - "traefik.tcp.routers.gitea-ssh.entrypoints=gitea-ssh"
+      - "traefik.tcp.routers.gitea-ssh.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.gitea-ssh.service=gitea-ssh"
+      - "traefik.tcp.routers.gitea-ssh.tls=false"
+      - "traefik.tcp.services.gitea-ssh.loadbalancer.server.port=22"
+
+  traefik:
+    image: "traefik:v2.0.0-rc3"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--global.sendAnonymousUsage=false"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.filename=/etc/traefik/traefik.config.toml"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.gitea-ssh.address=:22"
+      # - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      # - "--certificatesresolvers.mytlschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      # - "--certificatesresolvers.mytlschallenge.acme.email=postmaster@mydomain.com"
+      # - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2222:22"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ${PWD}/traefik.config.toml:/etc/traefik/traefik.config.toml
+      - certs:/etc/certs:ro
+      # - "./letsencrypt:/letsencrypt"
+    networks:
+      - proxy-tier
+    depends_on:
+      - omgwtfssl
+
+  omgwtfssl:
+    image: omgwtfssl
+    restart: "no"
+    volumes:
+      - certs:/certs
+    environment:
+      - SSL_SUBJECT=${DOMAIN}
+      - CA_SUBJECT=my@example.com
+      - SSL_KEY=/certs/default.key
+      - SSL_CSR=/certs/default.csr
+      - SSL_CERT=/certs/default.crt
+    networks:
+      - proxy-tier
+
+volumes:
+  db:
+  nc:
+  gitea:
+  certs:
+
+networks:
+  proxy-tier:
+    name: proxy-tier
