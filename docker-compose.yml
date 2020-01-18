@@ -50,7 +50,7 @@ services:
       - "traefik.http.routers.nextcloud.tls=true"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       # - "traefik.http.routers.nextcloud.tls.certresolver=mytlschallenge"
-      # strip /gitea prefix
+      # strip prefix
       - "traefik.http.middlewares.nc-strip-prefix.stripprefix.prefixes=/nextcloud"
       # - "traefik.http.middlewares.nc-strip-prefix.stripprefix.forceslash=true"
       - "traefik.http.routers.nextcloud.middlewares=nc-strip-prefix@docker"
@@ -98,6 +98,34 @@ services:
       - "traefik.tcp.routers.gitea-ssh.service=gitea-ssh"
       - "traefik.tcp.routers.gitea-ssh.tls=false"
       - "traefik.tcp.services.gitea-ssh.loadbalancer.server.port=22"
+
+  transmission:
+    image: linuxserver/transmission
+    environment:
+      - PUID=1000
+      - PGID=1000
+    env_file:
+      - transmission.env
+    volumes:
+      - transmission:/config
+      - ${TRANSMISSION_DOWNLOAD-/tmp}:/downloads
+      # - path to watch folder:/watch
+    ports:
+      - 51413:51413
+      - 51413:51413/udp
+    restart: unless-stopped
+    networks:
+      - proxy-tier
+      - default
+    labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=proxy-tier"
+        - "traefik.http.routers.transmission.entrypoints=websecure"
+        - "traefik.http.routers.transmission.rule=Host(`${DOMAIN}`) && PathPrefix(`/transmission`)"
+        - "traefik.http.routers.transmission.tls=true"
+        - "traefik.http.services.transmission.loadbalancer.server.port=9091"
+        # - "traefik.http.middlewares.transmission-strip-prefix.stripprefix.prefixes=/transmission"
+        # - "traefik.http.routers.transmission.middlewares=transmission-strip-prefix@docker"
 
   traefik:
     image: "traefik:v2.0.0-rc3"
@@ -148,6 +176,7 @@ volumes:
   db:
   nc:
   gitea:
+  transmission:
   certs:
 
 networks:
