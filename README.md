@@ -8,13 +8,14 @@ To be platform independent we use Docker and docker-compose. The components are 
 - Gitea: lightweight git server
 - Bitwarden: password manager
 - Postgres: database to store the data of the previous components
+- Transmission: torrent client
 - Traefik: handle routing and TLS
 
 ## Getting started
 - install docker and docker-compose
 - run `cd local-build; ARCH=<amd64 or arm-6> ./build.sh`
 - `docker-compose build`
-- `DOMAIN=localhost docker-compose up`
+- `env $(cat config/dev/global.env | xargs) docker-compose up`
 - useful for monitoring: `watch docker-compose ps`
 - wait until nextcloud installation is done (`Nextcloud was successfully installed` log line, can take a few minutes)
 - visit `localhost/nextcloud` and accept invalid cert

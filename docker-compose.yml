@@ -8,7 +8,7 @@ services:
       # - ${DB_DATA_PATH}:/var/lib/postgresql/data
       - db:/var/lib/postgresql/data
     env_file:
-      - db.env
+      - ${CONFIG-config/dev}/db.env
 
   nc-app:
     image: nextcloud:fpm-alpine
@@ -24,8 +24,8 @@ services:
       - NC_overwritehost=${DOMAIN}
       - NC_overwritewebroot=/nextcloud
     env_file:
-      - db.env
-      - admin.env
+      - ${CONFIG-config/dev}/db.env
+      - ${CONFIG-config/dev}/admin.env
     depends_on:
       - db
 
@@ -75,7 +75,7 @@ services:
       - SSH_PORT=2222
       - INSTALL_LOCK=true # will trigger auto install
     env_file:
-      - db.env
+      - ${CONFIG-config/dev}/db.env
     depends_on:
       - db
     networks:
@@ -105,7 +105,7 @@ services:
       - PUID=1000
       - PGID=1000
     env_file:
-      - transmission.env
+      - ${CONFIG-config/dev}/transmission.env
     volumes:
       - transmission:/config
       - ${TRANSMISSION_DOWNLOAD-/tmp}:/downloads
