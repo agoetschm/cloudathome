@@ -15,8 +15,12 @@ To be platform independent we use Docker and docker-compose. The components are 
 - install docker and docker-compose
 - run `cd local-build; ARCH=<amd64 or arm-6> ./build.sh`
 - `docker-compose build`
-- `env $(cat config/dev/global.env | xargs) docker-compose up`
+- `env $(cat config/dev/global.env | xargs) docker-compose -f docker -f docker-compose.yml -f with-omgwtfssl.yml up`
 - useful for monitoring: `watch docker-compose ps`
 - wait until nextcloud installation is done (`Nextcloud was successfully installed` log line, can take a few minutes)
-- visit `localhost/nextcloud` and accept invalid cert
+- visit [localhost/nextcloud](http://localhost/nextcloud) and accept invalid cert
 - to delete containers, volumes and networks: `docker-compose down -v`
+
+To start in production mode:
+- create folder `config/prod` with proper config files inside
+- `env $(cat config/prod/global.env | xargs) docker-compose -f docker-compose.yml -f with-letsencrypt.yml up -d`

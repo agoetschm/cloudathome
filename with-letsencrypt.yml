@@ -1,0 +1,23 @@
+version: '3.5'
+
+services:
+  traefik:
+    command:
+      - "--api.insecure=false"
+      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      # - "--certificatesresolvers.mytlschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.mytlschallenge.acme.email=${CERT_EMAIL}"
+      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+      # because f***ing docker-compose doesn't merge the 'command' section
+      # - "--log.level=DEBUG"
+      - "--providers.docker=true"
+      - "--global.sendAnonymousUsage=false"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.gitea-ssh.address=:22"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+  transmission:
+    labels:
+        - "traefik.http.routers.transmission.tls.certresolver=mytlschallenge"

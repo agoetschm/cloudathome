@@ -109,7 +109,6 @@ services:
     volumes:
       - transmission:/config
       - ${TRANSMISSION_DOWNLOAD-/tmp}:/downloads
-      # - path to watch folder:/watch
     ports:
       - 51413:51413
       - 51413:51413/udp
@@ -124,8 +123,6 @@ services:
         - "traefik.http.routers.transmission.rule=Host(`${DOMAIN}`) && PathPrefix(`/transmission`)"
         - "traefik.http.routers.transmission.tls=true"
         - "traefik.http.services.transmission.loadbalancer.server.port=9091"
-        # - "traefik.http.middlewares.transmission-strip-prefix.stripprefix.prefixes=/transmission"
-        # - "traefik.http.routers.transmission.middlewares=transmission-strip-prefix@docker"
 
   traefik:
     image: "traefik:v2.0.0-rc3"
@@ -135,14 +132,9 @@ services:
       - "--providers.docker=true"
       - "--global.sendAnonymousUsage=false"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.file.filename=/etc/traefik/traefik.config.toml"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.gitea-ssh.address=:22"
-      # - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
-      # - "--certificatesresolvers.mytlschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
-      # - "--certificatesresolvers.mytlschallenge.acme.email=postmaster@mydomain.com"
-      # - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
       - "443:443"
@@ -150,25 +142,6 @@ services:
       - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - ${PWD}/traefik.config.toml:/etc/traefik/traefik.config.toml
-      - certs:/etc/certs:ro
-      # - "./letsencrypt:/letsencrypt"
-    networks:
-      - proxy-tier
-    depends_on:
-      - omgwtfssl
-
-  omgwtfssl:
-    image: omgwtfssl
-    restart: "no"
-    volumes:
-      - certs:/certs
-    environment:
-      - SSL_SUBJECT=${DOMAIN}
-      - CA_SUBJECT=my@example.com
-      - SSL_KEY=/certs/default.key
-      - SSL_CSR=/certs/default.csr
-      - SSL_CERT=/certs/default.crt
     networks:
       - proxy-tier
 
@@ -177,7 +150,6 @@ volumes:
   nc:
   gitea:
   transmission:
-  certs:
 
 networks:
   proxy-tier:
