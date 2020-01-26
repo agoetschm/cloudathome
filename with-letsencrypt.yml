@@ -18,6 +18,7 @@ services:
       - "--entrypoints.gitea-ssh.address=:22"
     volumes:
       - "./letsencrypt:/letsencrypt"
+
   transmission:
     labels:
         - "traefik.http.routers.transmission.tls.certresolver=mytlschallenge"

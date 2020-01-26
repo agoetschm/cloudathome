@@ -1,14 +1,35 @@
 version: '3.5'
 
 services:
-  db:
+  db01:
     build: ./db
+    container_name: db01
     restart: always
-    volumes:
+    # volumes:
       # - ${DB_DATA_PATH}:/var/lib/postgresql/data
-      - db:/var/lib/postgresql/data
+      # - db:/var/lib/postgresql/data
+    environment:
+      - PG_SLAVE=db02.db-tier
     env_file:
       - ${CONFIG-config/dev}/db.env
+    networks:
+      - db-tier
+      - default
+
+
+  db02:
+    build: ./db
+    container_name: db02
+    restart: always
+    environment:
+      - PG_SLAVE=db01.db-tier
+    # volumes:
+      # - ${DB_DATA_PATH}:/var/lib/postgresql/data
+      # - db:/var/lib/postgresql/data
+    env_file:
+      - ${CONFIG-config/dev}/db.env
+    networks:
+      - db-tier
 
   nc-app:
     image: nextcloud:fpm-alpine
@@ -27,7 +48,7 @@ services:
       - ${CONFIG-config/dev}/db.env
       - ${CONFIG-config/dev}/admin.env
     depends_on:
-      - db
+      - db01
 
   nc-web:
     build: ./web
@@ -77,7 +98,7 @@ services:
     env_file:
       - ${CONFIG-config/dev}/db.env
     depends_on:
-      - db
+      - db01
     networks:
       - proxy-tier
       - default
@@ -154,3 +175,5 @@ volumes:
 networks:
   proxy-tier:
     name: proxy-tier
+  db-tier:
+    name: db-tier

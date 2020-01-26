@@ -24,3 +24,10 @@ To be platform independent we use Docker and docker-compose. The components are 
 To start in production mode:
 - create folder `config/prod` with proper config files inside
 - `env $(cat config/prod/global.env | xargs) docker-compose -f docker-compose.yml -f with-letsencrypt.yml up -d`
+
+## Database replication
+Current state:
+- start `db01` and `db02`
+- run `docker exec -ti -u postgres db02 start_as_backup`
+- check if it worked by logging on `db01` with `docker exec -ti -u postgres db01 bash`
+  - then `psql -x -c "select * from pg_stat_replication"`

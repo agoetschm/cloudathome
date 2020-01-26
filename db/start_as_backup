@@ -1,0 +1,10 @@
+#!/bin/bash
+
+read -p "This will remove the content of /var/lib/postgresql/data. Continue? [y/n] " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+  rm -rf /var/lib/postgresql/data/*
+  # $PG_SLAVE is the master here, should change for PG_PEER I guess
+  pg_basebackup -h $PG_SLAVE -U replicator -p 5432 -D /var/lib/postgresql/data -Fp -Xs -P -R
+fi
