@@ -31,3 +31,25 @@ Current state:
 - run `docker exec -ti -u postgres db02 start_as_backup`
 - check if it worked by logging on `db01` with `docker exec -ti -u postgres db01 bash`
   - then `psql -x -c "select * from pg_stat_replication"`
+
+## Run on system start up
+```
+sudo tee /etc/systemd/system/cloudathome.service <<EOF
+[Unit]
+Description=Cloudathome
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/pi/cloudathome
+ExecStart=env $(cat config/prod/global.env | xargs) /usr/local/bin/docker-compose -f docker-compose.yml -f with-letsencrypt.yml -f with-persistent-db.yml up -d traefik transmission nc-web gitea
+ExecStop=/usr/local/bin/docker-compose stop
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+And enable the the service with `sudo systemctl enable cloudathome`
