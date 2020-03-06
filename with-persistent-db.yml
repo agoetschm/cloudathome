@@ -1,0 +1,7 @@
+version: '3.5'
+
+services:
+  db01:
+    volumes:
+      - ${DB_DATA_PATH}:/var/lib/postgresql/data
+      # - db:/var/lib/postgresql/data

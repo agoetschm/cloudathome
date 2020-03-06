@@ -5,9 +5,6 @@ services:
     build: ./db
     container_name: db01
     restart: always
-    # volumes:
-      # - ${DB_DATA_PATH}:/var/lib/postgresql/data
-      # - db:/var/lib/postgresql/data
     environment:
       - PG_SLAVE=db02.db-tier
     env_file:
@@ -23,9 +20,6 @@ services:
     restart: always
     environment:
       - PG_SLAVE=db01.db-tier
-    # volumes:
-      # - ${DB_DATA_PATH}:/var/lib/postgresql/data
-      # - db:/var/lib/postgresql/data
     env_file:
       - ${CONFIG-config/dev}/db.env
     networks:
@@ -38,7 +32,7 @@ services:
       # - ${NEXTCLOUD_HTML_PATH}:/var/www/html
       - nc:/var/www/html
     environment:
-      - POSTGRES_HOST=db
+      - POSTGRES_HOST=db01
       - POSTGRES_DB=nextcloud
       - NEXTCLOUD_TRUSTED_DOMAINS=${DOMAIN}
       - NC_overwriteprotocol=https
@@ -91,10 +85,11 @@ services:
       - DOMAIN
       - ROOT_URL=https://${DOMAIN}/gitea/
       - DB_TYPE=postgres
-      - DB_HOST=db
+      - DB_HOST=db01
       - DB_NAME=gitea
       - SSH_PORT=2222
       - INSTALL_LOCK=true # will trigger auto install
+      - DISABLE_REGISTRATION=true # set to false to register a user
     env_file:
       - ${CONFIG-config/dev}/db.env
     depends_on:
@@ -167,7 +162,6 @@ services:
       - proxy-tier
 
 volumes:
-  db:
   nc:
   gitea:
   transmission:
