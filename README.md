@@ -58,3 +58,13 @@ WantedBy=multi-user.target
 EOF
 ```
 And enable the the service with `sudo systemctl enable cloudathome`
+
+
+## Monitoring
+You can monitor your Raspberry Pi's with the help of the Cloud InfluxData free plan and the content of the `monitoring` folder.
+- https://cloud2.influxdata.com/
+- install telegraf
+- complete `monitoring/telegraf.sample` and copy it to `/etc/default/telegraf`
+- copy `monitoring/telegraf.conf` to `/etc/telegraf/telegraf.conf`
+- `sudo systemctl restart telegraf`
+- import the grafana dashboard (it's the default "System" dashboard with the temeperature added)
