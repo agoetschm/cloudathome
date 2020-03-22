@@ -28,9 +28,6 @@ services:
   nc-app:
     image: nextcloud:fpm-alpine
     restart: always
-    volumes:
-      # - ${NEXTCLOUD_HTML_PATH}:/var/www/html
-      - nc:/var/www/html
     environment:
       - POSTGRES_HOST=db01
       - POSTGRES_DB=nextcloud
@@ -47,9 +44,6 @@ services:
   nc-web:
     build: ./web
     restart: always
-    volumes:
-      # - ${NEXTCLOUD_HTML_PATH}:/var/www/html:ro
-      - nc:/var/www/html:ro
     environment:
       - VIRTUAL_HOST=${DOMAIN}
     depends_on:
@@ -161,8 +155,17 @@ services:
     networks:
       - proxy-tier
 
+  nc-backup:
+    image: "jswetzen/rsync-backup:arm32v7"
+    env_file:
+      - ${CONFIG-config/dev}/nc-backup.env
+    volumes:
+      - "${NEXTCLOUD_BACKUP_PATH-/tmp/ncbackup}:/backup"
+      - "${NEXTCLOUD_BACKUP_SSH_PATH-/root/.ssh}:/root/.ssh:ro"
+    networks:
+      - default
+
 volumes:
-  nc:
   gitea:
   transmission:
 

@@ -21,9 +21,14 @@ To be platform independent we use Docker and docker-compose. The components are 
 - visit [localhost/nextcloud](http://localhost/nextcloud) and accept invalid cert
 - to delete containers, volumes and networks: `docker-compose down -v`
 
-To start in production mode:
+#### Production mode
 - create folder `config/prod` with proper config files inside
 - `env $(cat config/prod/global.env | xargs) docker-compose -f docker-compose.yml -f with-letsencrypt.yml -f with-persistent-db.yml up -d`
+
+#### Backup
+Unlike assumed at first, Nextcloud doesn't save the files in the database, they go in the `/var/www/html/data/files` directory. The `nc-backup` service can be started (usually on another device) to take care of the backup.
+- `env $(cat config/prod/global.env | xargs) docker-compose up -d nc-backup`
+- https://hub.docker.com/r/jswetzen/rsync-backup
 
 ## Database replication
 Current state:
@@ -44,7 +49,7 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/home/pi/cloudathome
-ExecStart=env $(cat config/prod/global.env | xargs) /usr/local/bin/docker-compose -f docker-compose.yml -f with-letsencrypt.yml -f with-persistent-db.yml up -d traefik transmission nc-web gitea
+ExecStart=env $(cat config/prod/global.env | xargs) /usr/local/bin/docker-compose -f docker-compose.yml -f with-letsencrypt.yml -f with-persistent-db.yml up -d traefik transmission nc-web
 ExecStop=/usr/local/bin/docker-compose stop
 TimeoutStartSec=0
 

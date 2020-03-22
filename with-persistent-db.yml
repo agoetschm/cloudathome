@@ -5,3 +5,9 @@ services:
     volumes:
       - ${DB_DATA_PATH}:/var/lib/postgresql/data
       # - db:/var/lib/postgresql/data
+  nc-app:
+    volumes:
+      - ${NEXTCLOUD_HTML_PATH}:/var/www/html
+  nc-web:
+    volumes:
+      - ${NEXTCLOUD_HTML_PATH}:/var/www/html:ro
