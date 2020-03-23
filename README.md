@@ -66,5 +66,8 @@ You can monitor your Raspberry Pi's with the help of the Cloud InfluxData free p
 - install telegraf
 - complete `monitoring/telegraf.sample` and copy it to `/etc/default/telegraf`
 - copy `monitoring/telegraf.conf` to `/etc/telegraf/telegraf.conf`
+- for the temperature, the `telegraf` user needs to be in the `video` group
+  - https://www.raspberrypi.org/forums/viewtopic.php?t=34076
+  - `sudo usermod -G video telegraf`
 - `sudo systemctl restart telegraf`
 - import the grafana dashboard (it's the default "System" dashboard with the temeperature added)
