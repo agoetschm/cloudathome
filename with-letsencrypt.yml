@@ -16,7 +16,7 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.gitea-ssh.address=:22"
-      - "--metrics.influxdb=${MON_NEXTCLOUD-false}"
+      - "--metrics.influxdb=${MON_TRAEFIK-false}"
       - "--metrics.influxdb.address=http://172.20.0.1:8186" # TODO change to host.docker.internal when https://github.com/docker/for-linux/issues/264 is solved
       - "--metrics.influxdb.protocol=http"
     volumes:

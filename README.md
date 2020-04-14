@@ -23,7 +23,7 @@ To be platform independent we use Docker and docker-compose. The components are 
 
 #### Production mode
 - create folder `config/prod` with proper config files inside
-- `env $(cat config/prod/global.env | xargs) docker-compose -f docker-compose.yml -f with-letsencrypt.yml -f with-persistent-db.yml up -d`
+- `env $(cat config/prod/global.env | xargs) docker-compose -f docker-compose.yml -f with-letsencrypt.yml -f with-persistent-db.yml up -d traefik transmission nc-web`
 
 #### Backup
 Unlike assumed at first, Nextcloud doesn't save the files in the database, they go in the `/var/www/html/data/files` directory. The `nc-backup` service can be started (usually on another device) to take care of the backup.
@@ -39,7 +39,7 @@ Current state:
 
 ## Run on system start up
 ```
-sudo tee /etc/systemd/system/cloudathome.service <<EOF
+sudo tee /etc/systemd/system/cloudathome.service <<'EOF'
 [Unit]
 Description=Cloudathome
 Requires=docker.service
@@ -49,7 +49,8 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/home/pi/cloudathome
-ExecStart=env $(cat config/prod/global.env | xargs) /usr/local/bin/docker-compose -f docker-compose.yml -f with-letsencrypt.yml -f with-persistent-db.yml up -d traefik transmission nc-web
+EnvironmentFile=/home/pi/cloudathome/config/prod/global.env
+ExecStart=/usr/local/bin/docker-compose -f docker-compose.yml -f with-letsencrypt.yml -f with-persistent-db.yml up -d traefik transmission nc-web
 ExecStop=/usr/local/bin/docker-compose stop
 TimeoutStartSec=0
 
